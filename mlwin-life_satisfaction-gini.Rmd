@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE, error = TRUE)
 ```
 
 ```{r load packages, include=F}
-library(R2MLwiN);options(MLwiN_path = "C:/Program Files/MLwiN v3.04/mlwin.exe")
+library(R2MLwiN);options(MLwiN_path = "MLwiN v3.04/mlwin.exe")
 library(lme4)
 library(lmtest)
 library(texreg)
@@ -24,7 +24,7 @@ library(mice)
 ```
  
 ```{r call relevant R scripts, include=F}
-source("C:\\Users\\USER\\Desktop\\Backup\\Harvard\\1_Harvard School Works\\Research\\WVS\\wvs_wellbeing\\wvs data preparation.R")
+source("data preparation.R")
 ```
 # scatter plots with correlation
 ```{r}
