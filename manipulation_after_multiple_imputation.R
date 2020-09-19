@@ -11,7 +11,7 @@ mi_complete <- mice::complete(mi_data_final, action="all")
 summary(mi_complete[[1]]$country) # check that there is no missing values in each country
 
 # # Load the SWIID
-# load("C:/Users/Sunyeop Lee/Desktop/Harvard/1_Harvard School Works/Research/WVS/Income inequality/swiid8_2/swiid8_2.rda")
+# load("swiid8_2/swiid8_2.rda")
 # 
 # # match the country names in SWIID to WVS in each imputed dataset
 # for (i in 1:length(mi_complete)) {
