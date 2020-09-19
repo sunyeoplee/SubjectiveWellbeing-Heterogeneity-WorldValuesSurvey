@@ -1,4 +1,4 @@
-# SubjectiveWellbeing-Heterogeneity-WorldValuesSurvey
+# WVS-SubjectiveWellbeing-Heterogeneity
 
 We examined heterogeneity in subjective wellbeing by national income (GDP) and by income inequality (Gini) in World Values Survey - Wave 6 data. 
 
