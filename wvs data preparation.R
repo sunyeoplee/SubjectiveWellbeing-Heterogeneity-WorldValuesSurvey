@@ -15,7 +15,7 @@ library(tableone)
 library(survey)
 
 # import the data 
-wvs6 <- readRDS("C:\\Users\\USER\\Desktop\\Backup\\Harvard\\1_Harvard School Works\\Research\\WVS\\F00007762-WV6_Data_R_v20180912.rds")
+wvs6 <- readRDS("F00007762-WV6_Data_R_v20180912.rds")
 
 # create my dataset and renames columns
 mywvs6 <- wvs6 %>% 
@@ -122,7 +122,7 @@ levels(mywvs6$country) <- list(Algeria="12", Azerbaijan="31", Argentina="32", Au
 #                               Trinidad_and_Tobago=780. Confirmed by sample size
 
 # Load the SWIID
-load("C:\\Users\\USER\\Desktop\\Backup\\Harvard\\1_Harvard School Works\\Research\\WVS\\Income inequality\\swiid8_2\\swiid8_2.rda")
+load("swiid8_2\\swiid8_2.rda")
 
 # add gini from swiid_summary (mean of 100 swiid datasets) to mywvs6 (main dataset). This does not take uncertainty in gini meausre into account.
 swiid_summary$country <- swiid_summary$country %>%
@@ -418,45 +418,6 @@ mywvs6[,cat_var] <- lapply(mywvs6[,cat_var], as.factor)
 all_var <- c(level_var, cont_var, cat_var)
 lapply(mywvs6[,all_var], summary)
 
-
-
-
-
-
-### check normality of variables and transform ###
-# skim
-# skim(select(mywvs6, c(cat_var, cont_var)))
-
-# histogram
-# ggplot(mywvs6, aes(x=mywvs6$life_satisfaction)) + geom_histogram() 
-
-# # Box-Cox transformation of age
-# Box <-  boxcox(mywvs6$age ~ 1,            # Transform Turbidity as a single vector
-#              lambda = seq(-6,6,0.1))      # Try values -6 to 6 by 0.1
-# Cox <-  data.frame(Box$x, Box$y)          # Create a data frame with the results
-# Cox2 = Cox[with(Cox, order(-Cox$Box.y)),] # Order the new data frame by decreasing y
-# Cox2[1,]                                  # Display the lambda with the greatest log likelihood
-# lambda <-  Cox2[1, "Box.x"]               # Extract that lambda
-# mywvs6$age_box <-  (mywvs6$age ^ lambda - 1)/lambda # Transform the original data
-# 
-# # Box-Cox transformation of life_satisfaction
-# Box <-  boxcox(mywvs6$life_satisfaction ~ 1,            # Transform Turbidity as a single vector
-#                lambda = seq(-6,6,0.1))      # Try values -6 to 6 by 0.1
-# Cox <-  data.frame(Box$x, Box$y)          # Create a data frame with the results
-# Cox2 = Cox[with(Cox, order(-Cox$Box.y)),] # Order the new data frame by decreasing y
-# Cox2[1,]                                  # Display the lambda with the greatest log likelihood
-# lambda <-  Cox2[1, "Box.x"]               # Extract that lambda
-# mywvs6$life_satisfaction_box <-  (mywvs6$life_satisfaction ^ lambda - 1)/lambda # Transform the original data
-# 
-# # Box-Cox transformation of income
-# Box <-  boxcox(mywvs6$income ~ 1,            # Transform Turbidity as a single vector
-#                lambda = seq(-6,6,0.1))      # Try values -6 to 6 by 0.1
-# Cox <-  data.frame(Box$x, Box$y)          # Create a data frame with the results
-# Cox2 = Cox[with(Cox, order(-Cox$Box.y)),] # Order the new data frame by decreasing y
-# Cox2[1,]                                  # Display the lambda with the greatest log likelihood
-# lambda <-  Cox2[1, "Box.x"]               # Extract that lambda
-# mywvs6$income_box <-  (mywvs6$income ^ lambda - 1)/lambda # Transform the original data
-
 # sort by country and individuals
 mywvs6 <- mywvs6 %>% arrange(country, id)
 
@@ -484,169 +445,5 @@ write.csv(print(svytable1_gini, catDigits=1,contDigits=2,missing=T,test=F,showAl
 svytable1_all <- svyCreateTableOne(data=mywvs6_svy, vars=tableone_all_vars, factorVars=tableone_cat_vars, includeNA=T)
 write.csv(print(svytable1_all, catDigits=1,contDigits=2,missing=T,test=F,showAllLevels=T,noSpaces=T), file='svytable1_all.csv')
 
-# create my own functions
-## fix R2MLwiN::sixway so that it presents all plots in the rmarkdown knitted document. Using this does not pick up MCSE and BD functions so these are manually added.
-sixway2 <- function(chain, name = NULL, acf.maxlag = 100, pacf.maxlag = 10, ...) {
-  args <- list(...)
-  
-  isMCMC <- TRUE
-  if (!coda::is.mcmc(chain) && !coda::is.mcmc.list(chain)) {
-    isMCMC <- FALSE
-    chain <- coda::mcmc(chain)
-  }
-  
-  if (coda::nvar(chain) > 1) {
-    stop("Cannot plot more than one parameter at a time")
-  }
-  
-  if (coda::is.mcmc.list(chain) && coda::nchain(chain) > 1) {
-    warning("Sixway does not fully support multiple chains - diagnostics will be on concatenated chains")
-  }
-  
-  if (length(args) > 0 && "mar" %in% names(args)) {
-    mar <- args[["mar"]]
-  } else {
-    mar <- c(4, 4, 2, 1)/2
-  }
-  
-  if (length(args) > 0 && "mgp" %in% names(args)) {
-    mgp <- args[["mgp"]]
-  } else {
-    mgp <- c(1, 0.25, 0)
-  }
-  
-  if (is.null(name)) {
-    if (!is.null(coda::varnames(chain))) {
-      name <- coda::varnames(chain)[1]
-    } else {
-      name <- "x"
-    }
-  }
-  
-  if (.Platform$GUI == "RStudio") {
-    o = tolower(Sys.info()["sysname"])
-    a = switch(o,
-               "darwin"  = "quartz",
-               "linux"   = "x11",
-               "windows" = "windows")
-    options("device" = a)
-  }
-  mypar <- graphics::par(mar = mar, mgp = mgp, bg="white", no.readonly=TRUE, ...)
-  on.exit(graphics::par(mypar))
-  graphics::split.screen(figs = c(4, 1))
-  graphics::split.screen(figs = c(1, 2), screen = 1)
-  graphics::split.screen(figs = c(1, 2), screen = 2)
-  graphics::split.screen(figs = c(1, 2), screen = 3)
-  graphics::split.screen(figs = c(1, 1), screen = 4)
-  
-  graphics::screen(5)
-  coda::traceplot(chain, xlab = "Iterations", ylab = "parameter", type = "l", tcl = -0.1, cex.axis = 0.8, main = "")
-  
-  flatchain <- as.matrix(chain)
-  
-  graphics::screen(6)
-  dens <- stats::density(flatchain)
-  graphics::plot(dens, xlab = "parameter value", ylab = "kernel density", main = "", tcl = -0.1, cex.axis = 0.8)
-  
-  graphics::screen(7)
-  aa <- stats::acf(flatchain, acf.maxlag, main = "", mgp = c(1, 0.25, 0), tcl = -0.1, cex.axis = 0.8, ylim = c(0, 1))
-  rho <- aa$acf[2]
-  
-  graphics::screen(8)
-  stats::pacf(flatchain, pacf.maxlag, main = "", mgp = c(1, 0.25, 0), tcl = -0.1, cex.axis = 0.8, ylim = c(0, 1))
-  
-  graphics::screen(9)
-  mcse <- MCSE(flatchain, rho, ll = 0.5, ul = 20)
-  graphics::plot(mcse[, 1], mcse[, 2], type = "l", xlab = "updates", ylab = "MCSE", tcl = -0.1, cex.axis = 0.8)
-  
-  RL1 <- coda::raftery.diag(flatchain, q = 0.025, r = 0.005, s = 0.95, converge.eps = 0.001)
-  RL2 <- coda::raftery.diag(flatchain, q = 0.975, r = 0.005, s = 0.95, converge.eps = 0.001)
-  Ndb <- BD(mean(flatchain), stats::var(flatchain), rho, k = 2, alpha = 0.05)
-  
-  graphics::screen(10)
-  graphics::plot(1, xlim = c(1, 10), ylim = c(1, 5), type = "n", axes = FALSE, xlab = "", ylab = "", frame.plot = TRUE)
-  graphics::text(5, 4.8, "Accuracy Diagnostics", cex = 1.2)
-  if (RL1$resmatrix[1] == "Error") {
-    graphics::text(5, 4, paste("RL diagnostic only available after ", RL1$resmatrix[2], " updates.", sep = ""), cex = 0.8)
-  } else {
-    graphics::text(5, 4, paste("Raftery-Lewis (quantile) : Nhat =(", RL1$resmatrix[1, "N"], ",", RL2$resmatrix[1, "N"],
-                               ")", sep = ""), cex = 0.8)
-  }
-  graphics::text(5, 3, "when q=(0.025,0.975), r=0.005 and s=0.95", cex = 0.8)
-  graphics::text(5, 2.1, paste("Brooks-Draper (mean) : Nhat =", Ndb), cex = 0.8)
-  graphics::text(5, 1.2, "when k=2 sigfigs and alpha=0.05", cex = 0.8)
-  graphics::screen(11)
-  graphics::plot(1, xlim = c(1, 22), ylim = c(1, 4), type = "n", axes = FALSE, xlab = "", ylab = "", frame.plot = TRUE)
-  graphics::text(10, 3.8, "Summary Statistics", cex = 1.2)
-  quants <- round(stats::quantile(flatchain, c(0.025, 0.05, 0.5, 0.95, 0.975)), 3)
-  graphics::text(10, 2.9, paste("param name :", name, "posterior mean =", round(mean(flatchain), 3), "SD = ", round(stats::sd(flatchain),
-                                                                                                                    3), "mode =", round(dens$x[which.max(dens$y)], 3)), cex = 0.8)
-  graphics::text(10, 2, paste("quantiles : 2.5% =", quants[1], "5% =", quants[2], "50% =", quants[3], "95% =", quants[4],
-                              "97.5% =", quants[5]), cex = 0.8)
-  if (isMCMC) {
-    graphics::text(10, 1.2, paste(coda::niter(chain) * coda::thin(chain), "actual iterations storing every ", paste(coda::thin(chain), "th",
-                                                                                                                    sep = ""), " iteration. Effective Sample Size (ESS) =", round(coda::effectiveSize(chain))), cex = 0.8)
-  } else {
-    graphics::text(10, 1.2, paste(length(chain), "actual iterations. Diagnostics assume storing every 1th iteration. Effective Sample Size (ESS) =",
-                                  round(coda::effectiveSize(chain))), cex = 0.8)
-  }
-  graphics::close.screen(all.screens = TRUE)
-}
-MCSE <- function(chain, rho, ll = 0.5, ul = 20) {
-  chain_var <- stats::var(chain)
-  if (coda::is.mcmc(chain)) {
-    runlength <- stats::end(chain) - (stats::start(chain) - 1)
-  } else {
-    runlength <- length(chain)
-  }
-  if (ul < ll) {
-    temp <- ll
-    ll <- ul
-    ul <- temp
-  }
-  if (ul - ll < 1e-04) {
-    ul <- 20
-    ll <- 0.5
-  }
-  ll <- ll * runlength
-  ul <- ul * runlength
-  mult <- (sqrt((1 + rho)/(1 - rho))) * sqrt(chain_var)
-  
-  mcsepoints <- 1000
-  mcse <- ll + ((ul - ll) * ((0:(mcsepoints - 1))/mcsepoints))
-  updates <- matrix(mult, mcsepoints, 1)/sqrt(mcse)
-  cbind(mcse, updates)
-}
-BD <- function(est, var, rho, k = 2, alpha = 0.05) {
-  # Based on an upublished paper by David Draper
-  ceiling(4 * stats::qnorm(1 - alpha/2)^2 * (sqrt(var)/(10^(floor(log10(abs(est))) - k + 1)))^2 * (1 + rho)/(1 - rho))
-} 
-## create a glance function to store coeff and vcov for mice function
-# tidy.mlwinfitIGLS <- function(x, conf.int = FALSE, conf.level = .95, ...) 
-{
-#   est <- coef(x)
-#   term <- names(est)
-#   sd <- sqrt(diag(vcov(x)))
-#   zscore <- est / sd
-#   pval <- 2 * stats::pnorm(abs(zscore), lower.tail = FALSE)
-#   ret <- tibble::tibble(term=term, estimate=est, std.error=sd, statistic=zscore, p.value=pval)
-#   
-#   if (conf.int) {
-#     conf <- plyr::unrowname(confint(x, level = conf.level))
-#     colnames(conf) <- c("conf.low", "conf.high")
-#     ret <- cbind(ret, conf)
-#   }
-#   ret
-}
-# glance.mlwinfitIGLS <- function(x, ...) 
-{
-  # tibble::tibble(
-  #   logLik = stats::logLik(x),
-  #   AIC = stats::AIC(x),
-  #   BIC = stats::BIC(x),
-  #   df.residual = stats::df.residual(x), 
-  #   nobs = stats::nobs(x)
-  # )
-}
 
 
