@@ -1,0 +1,699 @@
+---
+title: "MLwiN - life satisfaction"
+author: "Sunyeop Lee"
+date: "3/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+```{r load packages, include=F}
+library(R2MLwiN);options(MLwiN_path = "C:/Program Files/MLwiN v3.04/mlwin.exe")
+library(lme4)
+library(lmtest)
+library(texreg)
+library(grid)
+library(gridExtra)
+library(tidyverse)
+library(car)
+library(ggrepel)
+library(mice)
+
+```
+ 
+```{r call relevant R scripts, include=F}
+source("C:\\Users\\USER\\Desktop\\Backup\\Harvard\\1_Harvard School Works\\Research\\WVS\\wvs_wellbeing\\wvs data preparation.R")
+```
+# scatter plots with correlation
+```{r}
+# correlation: gdp vs. life satisfaction
+{
+grob1 <- grobTree(textGrob(paste("r = ", round(cor(mywvs6_country$gdp,
+                                                   mywvs6_country$life_satisfaction), 4)),
+                                 x = 0.6, y = 0.17, hjust = 0,
+                                 gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+grob2 <- grobTree(textGrob(paste("(p = ",round(cor.test(mywvs6_country$gdp,
+                                                        mywvs6_country$life_satisfaction)$p.value,4),
+                                 ")"), x = 0.6, y = 0.1, hjust = 0,
+                           gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+corrplot_gdp_ls <- ggplot(mywvs6_country, aes(x=gdp*10000, y=life_satisfaction)) + 
+  geom_point() + 
+  ggtitle("Life satisfaction by GDP") + 
+  geom_smooth(method=lm, se=FALSE, color='black') + 
+  scale_x_continuous(name = "GDP per capita, PPP", breaks = c(0,25000,50000,75000,100000)) +
+  scale_y_continuous(name = "Life satisfaction") +
+  annotation_custom(grob1) + 
+  annotation_custom(grob2) + 
+  theme(plot.title = element_text(hjust = 0.5), panel.background = element_blank(),
+        axis.line = element_line(color="black"), 
+        axis.line.x = element_line(color="black"))
+corrplot_gdp_ls
+}
+# correlation: lngdp vs. life satisfaction
+{
+grob1 <- grobTree(textGrob(paste("r = ", round(cor(mywvs6_country$lngdp,
+                                                   mywvs6_country$life_satisfaction), 4)),
+                                 x = 0.6, y = 0.17, hjust = 0,
+                                 gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+grob2 <- grobTree(textGrob(paste("(p = ",round(cor.test(mywvs6_country$lngdp,
+                                                        mywvs6_country$life_satisfaction)$p.value,4),
+                                 ")"), x = 0.6, y = 0.1, hjust = 0,
+                           gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+corrplot_lngdp_ls <- ggplot(mywvs6_country, aes(x=gdp*10000, y=life_satisfaction)) + 
+  geom_point() + 
+  ggtitle("Life satisfaction by lnGDP") + 
+  geom_smooth(method=lm, se=FALSE, color='black') + 
+  scale_x_continuous(name = "GDP per capita, PPP", trans = "log", breaks = c(2500, 5000, 10000, 20000, 40000, 80000)) +
+  scale_y_continuous(name = "Life satisfaction") +
+  annotation_custom(grob1) + 
+  annotation_custom(grob2) +
+  theme(plot.title = element_text(hjust = 0.5), panel.background = element_blank(),
+        axis.line = element_line(color="black"), 
+        axis.line.x = element_line(color="black"))
+corrplot_lngdp_ls
+}
+# correlation: gni vs. life satisfaction
+{
+grob1 <- grobTree(textGrob(paste("r = ", round(cor(mywvs6_country$gni,
+                                                   mywvs6_country$life_satisfaction), 4)),
+                                 x = 0.6, y = 0.17, hjust = 0,
+                                 gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+grob2 <- grobTree(textGrob(paste("(p = ",round(cor.test(mywvs6_country$gni,
+                                                        mywvs6_country$life_satisfaction)$p.value,4),
+                                 ")"), x = 0.6, y = 0.1, hjust = 0,
+                           gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+corrplot_gni_ls <- ggplot(mywvs6_country, aes(x=gni*10000, y=life_satisfaction)) + 
+  geom_point() + 
+  ggtitle("Life satisfaction by GNI") + 
+  geom_smooth(method=lm, se=FALSE, color='black') + 
+  scale_x_continuous(name = "GNI per capita, PPP", breaks = c(0,25000,50000,75000,100000)) +
+  scale_y_continuous(name = "Life satisfaction") +
+  annotation_custom(grob1) + 
+  annotation_custom(grob2) +
+  theme(plot.title = element_text(hjust = 0.5), panel.background = element_blank(),
+        axis.line = element_line(color="black"), 
+        axis.line.x = element_line(color="black"))
+corrplot_gni_ls
+}
+# correlation: gini vs. life satisfaction
+{
+grob1 <- grobTree(textGrob(paste("r = ", round(cor(mywvs6_country$gini,
+                                                   mywvs6_country$life_satisfaction), 4)),
+                                 x = 0.6, y = 0.15, hjust = 0,
+                                 gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+grob2 <- grobTree(textGrob(paste("(p = ",round(cor.test(mywvs6_country$gini,
+                                                        mywvs6_country$life_satisfaction)$p.value,4),
+                                 ")"), x = 0.6, y = 0.08, hjust = 0,
+                           gp = gpar(col = "black", fontsize = 9, fontface = "bold")))
+corrplot_gini_ls <- ggplot(mywvs6_country, aes(x=gini, y=life_satisfaction)) + 
+  geom_point() + 
+  ggtitle("Life satisfaction by Gini") + 
+  geom_smooth(method=lm, se=FALSE, color='black') + 
+  scale_x_continuous(name = "Gini index", breaks = c(30,40,50,60)) +
+  scale_y_continuous(name = "Life satisfaction") +
+  annotation_custom(grob1) + 
+  annotation_custom(grob2) +
+  theme(plot.title = element_text(hjust = 0.5), panel.background = element_blank(),
+        axis.line = element_line(color="black"), 
+        axis.line.x = element_line(color="black"))
+corrplot_gini_ls
+}
+
+grid.arrange(corrplot_gdp_ls,corrplot_gini_ls, nrow=1)
+
+```
+
+
+# unadjusted random intercept model - R2MLwiN - life satisfaction
+```{r null random intercept model}
+# unadjusted random intercept model
+sample <- mywvs6
+options <- list(debugmode = FALSE, Meth = 0, resi.store = TRUE,
+                residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T))
+model <-  life_satisfaction ~ 1 + (1 | country) + (1| id)
+
+nullRI_ls <- runMLwiN(Formula = model, data = sample, estoption = options) # complete case analysis
+summary(nullRI_ls)
+
+# mi_nullRI_ls_gini <- lapply(mi_complete_final, function(x){ # analysis accounting for missing data
+#   runMLwiN(Formula = model, data = x, estoption = options)
+# })
+# 
+# combined_fit <- pool(mi_nullRI_ls_gini)
+# summary(combined_fit)
+
+# exploration and diagnostics
+{
+# # variance partitioning coefficient (i.e., intraclass correlation coefficient)
+# vpc <- nullRI_ls["RP"][["RP2_var_Intercept"]]*100 / 
+#           (nullRI_ls["RP"][["RP1_var_Intercept"]] + nullRI_ls["RP"][["RP2_var_Intercept"]])
+# vpc
+
+# # caterpillar plot for level 2 residuals
+# residuals <- nullRI_ls@residual$lev_2_resi_est_Intercept
+# residualsCI <- 1.96 * sqrt(nullRI_ls@residual$lev_2_resi_var_Intercept)
+# residualsRank <- rank(residuals)
+# rankno <- order(residualsRank)
+# caterpillar(y = residuals[rankno], x = 1:60, qtlow = (residuals - residualsCI)[rankno],
+#             qtup = (residuals + residualsCI)[rankno], xlab = 'Rank', ylab = 'Intercept')
+
+
+# # normality diagnostic for level 2
+# residuals <- nullRI_ls@residual$lev_2_resi_est_Intercept
+# qqnorm(residuals, ylab="Standardized Residuals", xlab="Normal Scores", 
+#          main="Life satisfaction level 2")
+# qqline(residuals)
+# 
+# # normality diagnostic for level 1
+# residuals <- nullRI_ls@residual$lev_1_resi_est_Intercept
+# qqnorm(residuals, ylab="Standardized Residuals", xlab="Normal Scores", 
+#          main="Life satisfaction level 1")
+# qqline(residuals)
+}
+  
+```
+
+# Adjusted random intercept model - R2MLwiN - life satisfaction
+```{r adjusted random intercept model}
+# adjusted random intercept model
+sample <- mywvs6
+options <- list(debugmode = F, Meth = 0, resi.store = T, residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T))
+model <-
+  life_satisfaction ~ 1 + sex + age_c + age_c_2 + income + education + socialclass + maritalstatus + gdp_c + gini_c +
+  (1 | country) + (1 | id)
+fullRI_ls_gini <- runMLwiN(Formula = model, data = sample, estoption = options) # complete case analysis
+summary(fullRI_ls_gini)
+
+# mi_fullRI_ls_gini <- lapply(mi_complete_final, function(x){ # analysis accounting for missing data
+#   runMLwiN(Formula = model, data = x, estoption = options)
+# })
+# combined_fit <- pool(mi_fullRI_ls_gini)
+# summary(combined_fit)
+
+# exploration and diagnostics
+{
+# # variance partitioning coefficient (i.e., intraclass correlation coefficient)
+# vpc <- fullRI_ls["RP"][["RP2_var_Intercept"]]*100 / 
+#           (fullRI_ls["RP"][["RP1_var_Intercept"]] + fullRI_ls["RP"][["RP2_var_Intercept"]])
+# vpc
+
+# # caterpillar plot for level 2 residuals
+# residuals <- fullRI_ls@residual$lev_2_resi_est_Intercept
+# residualsCI <- 1.96 * sqrt(fullRI_ls@residual$lev_2_resi_var_Intercept)
+# residualsRank <- rank(residuals)
+# rankno <- order(residualsRank)
+# caterpillar(y = residuals[rankno], x = 1:60, qtlow = (residuals - residualsCI)[rankno],
+#             qtup = (residuals + residualsCI)[rankno], xlab = 'Rank', ylab = 'Intercept')
+# 
+# # plot level 2 residual by GDP
+# plot(x=(unique(mywvs6$gdp_c)+mean(mywvs6$gdp, na.rm=T))*10000,
+#      y=fullRI_ls@residual$lev_2_resi_est_Intercept,
+#      xlab="GDP ($)",
+#      ylab="Level 2 residuals",
+#      main="Life Satisfaction (level 2 residual) vs. GDP")
+
+
+
+# # normality diagnostic for level 2
+# residuals <- fullRI_ls@residual$lev_2_resi_est_Intercept
+# qqnorm(residuals, ylab="Standardized Residuals", xlab="Normal Scores", 
+#          main="Life satisfaction level 2")
+# qqline(residuals)
+# 
+# hist(residuals) # histogram
+# 
+# # normality diagnostic for level 1
+# residuals <- fullRI_ls@residual$lev_1_resi_est_Intercept
+# qqnorm(residuals, ylab="Standardized Residuals", xlab="Normal Scores", 
+#          main="Life satisfaction level 1")
+# qqline(residuals)
+# 
+# hist(residuals)
+# ggplot(mywvs6, aes(x=residuals)) + geom_histogram() # historgram
+}
+  
+# # adjusted random intercept model - gini as tertiles
+# sample <- mywvs6
+# options <- list(debugmode = F, Meth = 0, resi.store = T, residoptions='standardised',
+#                 weighting=list(weightvar=c(NA,"weight"), standardised=T))
+# model <-
+#   life_satisfaction ~ 1 + sex + age_c + age_c_2 + income + education + socialclass +
+#   maritalstatus + lngdp + gini_2nd + gini_3rd +
+#   (1 | country) + (1 | id)
+# fullRI_ls_gini_tertile <- runMLwiN(Formula = model, data = sample, estoption = options) # complete case analysis
+# summary(fullRI_ls_gini_tertile)
+
+```
+
+# unadjusted complex level 2 model - R2MLwiN - life satisfaction
+```{r}
+# unadjusted complex level 2 model
+sample <- mywvs6
+options <- list(debugmode = F, Meth = 0, resi.store = T, residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T), reset=c(2,2))
+model <-  life_satisfaction ~ 1 + gini_c +
+  (1 + gini_c| country) + (1| id)
+nullRS_ls_gini <- runMLwiN(Formula = model, data = sample, estoption = options) # complete case analysis
+summary(nullRS_ls_gini)
+
+# mi_nullRS_ls_gini <- lapply(mi_complete_final, function(x){ # analysis accounting for missing data
+#   runMLwiN(Formula = model, data = x, estoption = options)
+# })
+# combined_fit <- pool(mi_nullRS_ls_gini)
+# summary(combined_fit)
+
+# plot variance as a quadratic function of gini
+{
+sample$lev2variance <- nullRS_ls_gini["RP"][["RP2_var_Intercept"]] +
+                    2 * nullRS_ls_gini["RP"][["RP2_cov_Intercept_gini_c"]] *
+                    sample[["gini_c"]] + nullRS_ls_gini["RP"][["RP2_var_gini_c"]] * sample[["gini_c"]]^2
+
+variance_only_null <- ggplot(data = sample, aes(gini, lev2variance)) +
+                    geom_line(linetype = "solid", size = 1) +
+                    labs(title="Variance by Gini",
+                         x="Gini",
+                         y = "Variance") +
+                    theme(plot.title = element_text(size = 10, hjust = 0.5,
+                                                    face = "bold"),
+                          axis.text=element_text(size=10, face="bold"),
+                          axis.title=element_text(size=10,face="bold"))
+variance_only_null
+}
+# plot the predicted value and its 95% coverage bounds
+{
+u0 <- nullRS_ls_gini@residual[["lev_2_resi_est_Intercept"]]
+u1 <- nullRS_ls_gini@residual[["lev_2_resi_est_gini_c"]]
+b0 <- nullRS_ls_gini@FP[["FP_Intercept"]]
+b1 <- nullRS_ls_gini@FP[["FP_gini_c"]]
+mywvs6_lv2 <- data.frame(u0,u1,b0,b1)
+mywvs6_lv2 <- cbind(country_gini, mywvs6_lv2)
+mywvs6_lv2$country_ls <- b0 + u0 + (b1 + u1) * mywvs6_lv2$gini_c
+mywvs6_lv2$lev2variance <- nullRS_ls_gini["RP"][["RP2_var_Intercept"]] +
+                    2 * nullRS_ls_gini["RP"][["RP2_cov_Intercept_gini_c"]] *
+                    mywvs6_lv2[["gini_c"]] + nullRS_ls_gini["RP"][["RP2_var_gini_c"]] *
+  mywvs6_lv2[["gini_c"]]^2
+mywvs6_lv2$fit <- b0 + b1 * mywvs6_lv2$gini_c
+mywvs6_lv2$upperCI <- mywvs6_lv2$fit + 1.96*sqrt(mywvs6_lv2$lev2variance)
+mywvs6_lv2$lowerCI <- mywvs6_lv2$fit - 1.96*sqrt(mywvs6_lv2$lev2variance)
+## plot
+plot(x=mywvs6_lv2$gini, y=mywvs6_lv2$country_ls)
+mean_variance_null <- ggplot(data = mywvs6_lv2, aes(x=gini, y=fit)) +
+  geom_point(aes(x=gini, y=country_ls)) +
+  geom_line(size=1) +
+  geom_ribbon(aes(ymin=lowerCI, ymax=upperCI),
+              fill="blue", alpha=0.15) +
+  #geom_text_repel(aes(x=gini, y=country_ls, label=country), color="black", size=4) +
+  labs(title="Mean and coverage bounds", x="Gini index", y = "Life satisfaction") +
+  theme(plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+        axis.text=element_text(size=10, face="bold"),
+        axis.title=element_text(size=10,face="bold"))
+mean_variance_null
+}
+
+# unadjusted complex level 2 model - gini as tertiles
+sample <- mywvs6
+diag <-  matrix(, nrow = 2, ncol = 1)
+diag[1, 1] <-  2
+diag[2, 1] <-  1
+options <- list(debugmode = F, Meth = 0, resi.store = T, residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T), reset=c(2,2),
+                smat=diag)
+model <-  life_satisfaction ~ 1 + gini_2nd + gini_3rd +
+  (gini_1st + gini_2nd + gini_3rd| country) + (1| id)
+nullRS_ls_gini_tertile <- runMLwiN(Formula = model, data = sample, estoption = options) # complete case analysis
+summary(nullRS_ls_gini_tertile)
+
+# mi_nullRS_ls_gini_tertile <- lapply(mi_complete_final, function(x){ # analysis accounting for missing data
+#   runMLwiN(Formula = model, data = x, estoption = options)
+# })
+# combined_fit <- pool(mi_nullRS_ls_gini_tertile)
+# summary(combined_fit)
+
+# bar plot
+{
+lv2variance <- c(nullRS_ls_gini_tertile@RP[["RP2_var_gini_1st1"]],
+                 nullRS_ls_gini_tertile@RP[["RP2_var_gini_2nd1"]],
+                 nullRS_ls_gini_tertile@RP[["RP2_var_gini_3rd1"]])
+gini_tertile <- c('gini_1st', 'gini_2nd', 'gini_3rd')
+mywvs6_lv2 <- tibble(gini_tertile, lv2variance)
+
+barplot1 <- ggplot(mywvs6_lv2) +
+  geom_bar(stat = 'identity',
+           aes(x = gini_tertile, y = lv2variance),
+           fill = 'orange') +
+  scale_y_continuous("Variance", limits=c(0,1)) +
+  labs(title = "Variance of country-level life satisfaction", x = "Gini tertile")
+barplot1
+}
+
+# mean error plots 
+{
+u0 <- nullRS_ls_gini_tertile@residual[["lev_2_resi_est_gini_1st1"]]
+u1 <- nullRS_ls_gini_tertile@residual[["lev_2_resi_est_gini_2nd1"]]
+u2 <- nullRS_ls_gini_tertile@residual[["lev_2_resi_est_gini_3rd1"]]
+b0 <- nullRS_ls_gini_tertile@FP[["FP_Intercept"]]
+b1 <- nullRS_ls_gini_tertile@FP[["FP_gini_2nd1"]]
+b2 <- nullRS_ls_gini_tertile@FP[["FP_gini_3rd1"]]
+mywvs6_lv2 <- data.frame(u0,u1,u2,b0,b1,b2)
+mywvs6_lv2 <- cbind(country_gini, mywvs6_lv2)
+
+mywvs6_lv2$country_ls[mywvs6_lv2$gini_tertile=="[23.9,33.5]"] <-
+  mywvs6_lv2$b0[mywvs6_lv2$gini_tertile=="[23.9,33.5]"] + 
+  mywvs6_lv2$u0[mywvs6_lv2$gini_tertile=="[23.9,33.5]"]
+mywvs6_lv2$country_ls[mywvs6_lv2$gini_tertile=="(33.5,40.2]"] <- 
+  mywvs6_lv2$b0[mywvs6_lv2$gini_tertile=="(33.5,40.2]"] + 
+  mywvs6_lv2$b1[mywvs6_lv2$gini_tertile=="(33.5,40.2]"] + 
+  mywvs6_lv2$u1[mywvs6_lv2$gini_tertile=="(33.5,40.2]"]
+mywvs6_lv2$country_ls[mywvs6_lv2$gini_tertile=="(40.2,59.4]"] <- 
+  mywvs6_lv2$b0[mywvs6_lv2$gini_tertile=="(40.2,59.4]"] + 
+  mywvs6_lv2$b2[mywvs6_lv2$gini_tertile=="(40.2,59.4]"] + 
+  mywvs6_lv2$u2[mywvs6_lv2$gini_tertile=="(40.2,59.4]"]
+mywvs6_lv2$country_ls_sd[mywvs6_lv2$gini_tertile=="[23.9,33.5]"] <-
+  sqrt(nullRS_ls_gini_tertile@RP[["RP2_var_gini_1st1"]])
+mywvs6_lv2$country_ls_sd[mywvs6_lv2$gini_tertile=="(33.5,40.2]"] <- 
+  sqrt(nullRS_ls_gini_tertile@RP[["RP2_var_gini_2nd1"]])
+mywvs6_lv2$country_ls_sd[mywvs6_lv2$gini_tertile=="(40.2,59.4]"] <- 
+  sqrt(nullRS_ls_gini_tertile@RP[["RP2_var_gini_3rd1"]])
+
+lv2variance <- c(nullRS_ls_gini_tertile@RP[["RP2_var_gini_1st1"]],
+                 nullRS_ls_gini_tertile@RP[["RP2_var_gini_2nd1"]],
+                 nullRS_ls_gini_tertile@RP[["RP2_var_gini_3rd1"]])
+sd<- sqrt(lv2variance)
+
+statsummary <- mywvs6_lv2 %>% 
+  group_by(gini_tertile) %>% 
+  summarize(mean=mean(country_ls, na.rm=T))
+statsummary <- cbind(statsummary, sd)
+
+crossbarplot1 <- ggplot(data=mywvs6_lv2, aes(x=gini_tertile, y=country_ls)) + 
+  geom_jitter(color="mediumpurple", alpha=0.5, width=0.2) +
+  geom_point(data=statsummary,aes(x=gini_tertile, y=mean), size=rel(2)) +
+  geom_crossbar(data=statsummary,aes(x=gini_tertile, y=mean ,ymin=mean-1.96*sd,
+                                     ymax=mean+1.96*sd), width=0.25, size=0.005) +
+  #geom_text_repel(aes(label=country), color="black", size=4) +
+  labs(x="Gini tertiles", y="Life satisfaction") +
+  ggtitle("Life satisfaction by Gini tertiles") +
+  theme_bw()
+crossbarplot1
+}
+
+```
+
+# adjusted complex level 2 model - R2MLwiN - life satisfaction
+```{r}
+# adjusted complex level 2 model
+sample <- mywvs6
+options <- list(debugmode = F, Meth = 0, resi.store = T, residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T), reset=c(2,2),
+                maxiter=50)
+model <-  life_satisfaction ~ 1 + sex + age_c + age_c_2 + income + education + socialclass + maritalstatus + gdp_c + gini_c + 
+  (1 + gini_c| country) + (1| id)
+fullRS_ls_gini <- runMLwiN(Formula = model, data = sample, estoption = options) # complete case analysis
+summary(fullRS_ls_gini)
+
+# plot variance as a quadratic function of gini
+{
+sample$lev2variance <- fullRS_ls_gini["RP"][["RP2_var_Intercept"]] +
+                    2 * fullRS_ls_gini["RP"][["RP2_cov_Intercept_gini_c"]] *
+                    sample[["gini_c"]] + fullRS_ls_gini["RP"][["RP2_var_gini_c"]] * sample[["gini_c"]]^2
+
+variance_only_full <- ggplot(data = sample, aes(gini, lev2variance)) +
+                    geom_line(linetype = "solid", size = 1) +
+                    labs(title="Variance by Gini",
+                         x="Gini",
+                         y = "Variance") +
+                    theme(plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+                          axis.text=element_text(size=10, face="bold"),
+                          axis.title=element_text(size=10,face="bold"))
+variance_only_full
+}
+# plot the predicted value and its 95% coverage bounds
+{
+## create a dataset at level 2 (level 2 mean, variance)
+# level 2 mean and variance
+u0 <- fullRS_ls_gini@residual[["lev_2_resi_est_Intercept"]]
+u1 <- fullRS_ls_gini@residual[["lev_2_resi_est_gini_c"]]
+b0 <- fullRS_ls_gini@FP[["FP_Intercept"]]
+b1 <- fullRS_ls_gini@FP[["FP_gini_c"]]
+mywvs6_lv2 <- data.frame(u0,u1,b0,b1)
+mywvs6_lv2 <- cbind(country_gini, mywvs6_lv2)
+mywvs6_lv2$country_ls <- b0 + u0 + (b1 + u1) * mywvs6_lv2$gini_c
+mywvs6_lv2$lev2variance <- fullRS_ls_gini["RP"][["RP2_var_Intercept"]] +
+                    2 * fullRS_ls_gini["RP"][["RP2_cov_Intercept_gini_c"]] *
+                    mywvs6_lv2[["gini_c"]] + fullRS_ls_gini["RP"][["RP2_var_gini_c"]] *
+  mywvs6_lv2[["gini_c"]]^2
+mywvs6_lv2$fit <- b0 + b1 * mywvs6_lv2$gini_c
+mywvs6_lv2$upperCI <- mywvs6_lv2$fit + 1.96*sqrt(mywvs6_lv2$lev2variance)
+mywvs6_lv2$lowerCI <- mywvs6_lv2$fit - 1.96*sqrt(mywvs6_lv2$lev2variance)
+# level 2 constant variance from random intercept model
+mywvs6_lv2$lev2variance_constant <- fullRI_ls_gini["RP"][["RP2_var_Intercept"]]
+mywvs6_lv2$upperCI_constant <- mywvs6_lv2$fit + 1.96*sqrt(mywvs6_lv2$lev2variance_constant)
+mywvs6_lv2$lowerCI_constant <- mywvs6_lv2$fit - 1.96*sqrt(mywvs6_lv2$lev2variance_constant)
+## plot
+mean_variance_full<- ggplot(data = mywvs6_lv2, aes(x=gini, y=fit)) +
+  geom_point(aes(x=gini, y=country_ls)) +
+  geom_line(size=1) + 
+  geom_ribbon(aes(ymin=lowerCI, ymax=upperCI), fill="gray10", alpha=0.15) +
+  geom_line(aes(y=upperCI_constant), linetype="dashed") +
+  geom_line(aes(y=lowerCI_constant), linetype="dashed") +
+#  geom_text_repel(aes(x=gini, y=country_ls, label=country), color="black", size=4) +
+  labs(title="Life satisfaction by Gini", x="Gini index", y = "Life satisfaction") +
+  theme(plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+        axis.text=element_text(size=10, face="bold"),
+        axis.title=element_text(size=10,face="bold"),
+        panel.background=element_blank(),
+        axis.line=element_line(color="black"),
+        panel.grid.major=element_blank())
+mean_variance_full
+}
+
+# grid.arrange(variance_only_null, mean_variance_null, variance_only_full, mean_variance_full, nrow=2, ncol=2)
+
+lrtest(fullRI_ls_gini, fullRS_ls_gini)
+linearHypothesis(fullRS_ls_gini, c("RP2_cov_Intercept_gini_c", "RP2_var_gini_c"))
+linearHypothesis(fullRS_ls_gini, c("RP2_var_Intercept"))
+linearHypothesis(fullRS_ls_gini, c("RP2_cov_Intercept_gini_c"))
+linearHypothesis(fullRS_ls_gini, c("RP2_var_gini_c"))
+
+
+# adjusted complex level 2 model - gini as tertile
+sample <- mywvs6
+diag <-  matrix(, nrow = 2, ncol = 1)
+diag[1, 1] <-  2
+diag[2, 1] <-  1
+options <- list(debugmode = F, Meth = 0, resi.store = T, residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T), reset=c(2,2),
+                smat=diag, maxiter=50)
+model <-  life_satisfaction ~ 1 + sex + age_c + age_c_2 + income + education + socialclass + maritalstatus + gdp_c + gini_2nd + gini_3rd +
+  (gini_1st + gini_2nd + gini_3rd| country) + (1| id)
+fullRS_ls_gini_tertile <- runMLwiN(Formula = model, data = sample, estoption = options) # complete case analysis
+summary(fullRS_ls_gini_tertile)
+
+linearHypothesis(fullRS_ls_gini_tertile, "RP2_var_gini_1st1=RP2_var_gini_2nd1")
+linearHypothesis(fullRS_ls_gini_tertile, "RP2_var_gini_2nd1=RP2_var_gini_3rd1")
+linearHypothesis(fullRS_ls_gini_tertile, "RP2_var_gini_1st1=RP2_var_gini_3rd1")
+
+
+
+
+
+# bar plot
+{
+lv2variance <- c(fullRS_ls_gini_tertile@RP[["RP2_var_gini_1st1"]],
+                 fullRS_ls_gini_tertile@RP[["RP2_var_gini_2nd1"]],
+                 fullRS_ls_gini_tertile@RP[["RP2_var_gini_3rd1"]])
+gini_tertile <- c('gini_1st', 'gini_2nd', 'gini_3rd')
+mywvs6_lv2 <- tibble(gini_tertile, lv2variance)
+
+barplot2 <- ggplot(mywvs6_lv2) +
+  geom_bar(stat = 'identity',
+           aes(x = gini_tertile, y = lv2variance),
+           fill = 'orange') +
+  scale_y_continuous("Variance", limits=c(0,1)) +
+  labs(title = "Variance of country-level life satisfaction", x = "Gini tertile")
+barplot2
+}
+
+grid.arrange(barplot1, barplot2, nrow=1)
+
+# mean error plots 
+{
+u0 <- fullRS_ls_gini_tertile@residual[["lev_2_resi_est_gini_1st1"]]
+u1 <- fullRS_ls_gini_tertile@residual[["lev_2_resi_est_gini_2nd1"]]
+u2 <- fullRS_ls_gini_tertile@residual[["lev_2_resi_est_gini_3rd1"]]
+b0 <- fullRS_ls_gini_tertile@FP[["FP_Intercept"]]
+b1 <- fullRS_ls_gini_tertile@FP[["FP_gini_2nd1"]]
+b2 <- fullRS_ls_gini_tertile@FP[["FP_gini_3rd1"]]
+mywvs6_lv2 <- data.frame(u0,u1,u2,b0,b1,b2)
+mywvs6_lv2 <- cbind(country_gini, mywvs6_lv2)
+
+mywvs6_lv2$country_ls[mywvs6_lv2$gini_tertile=="[23.9,33.5]"] <-
+  mywvs6_lv2$b0[mywvs6_lv2$gini_tertile=="[23.9,33.5]"] + 
+  mywvs6_lv2$u0[mywvs6_lv2$gini_tertile=="[23.9,33.5]"]
+mywvs6_lv2$country_ls[mywvs6_lv2$gini_tertile=="(33.5,40.2]"] <- 
+  mywvs6_lv2$b0[mywvs6_lv2$gini_tertile=="(33.5,40.2]"] + 
+  mywvs6_lv2$b1[mywvs6_lv2$gini_tertile=="(33.5,40.2]"] + 
+  mywvs6_lv2$u1[mywvs6_lv2$gini_tertile=="(33.5,40.2]"]
+mywvs6_lv2$country_ls[mywvs6_lv2$gini_tertile=="(40.2,59.4]"] <- 
+  mywvs6_lv2$b0[mywvs6_lv2$gini_tertile=="(40.2,59.4]"] + 
+  mywvs6_lv2$b2[mywvs6_lv2$gini_tertile=="(40.2,59.4]"] + 
+  mywvs6_lv2$u2[mywvs6_lv2$gini_tertile=="(40.2,59.4]"]
+
+lv2variance <- c(fullRS_ls_gini_tertile@RP[["RP2_var_gini_1st1"]],
+                 fullRS_ls_gini_tertile@RP[["RP2_var_gini_2nd1"]],
+                 fullRS_ls_gini_tertile@RP[["RP2_var_gini_3rd1"]])
+sd<- sqrt(lv2variance)
+
+statsummary <- mywvs6_lv2 %>% 
+  group_by(gini_tertile) %>% 
+  summarize(mean=mean(country_ls, na.rm=T))
+statsummary <- cbind(statsummary, sd)
+
+crossbarplot2 <- ggplot(data=mywvs6_lv2, aes(x=gini_tertile, y=country_ls)) + 
+  geom_point(color="black", alpha=1, position=position_jitter(width=0.2, seed=1)) +
+  # geom_point(data=statsummary,aes(x=gini_tertile, y=mean), size=rel(2)) +
+  geom_crossbar(data=statsummary,aes(x=gini_tertile, y=mean ,ymin=mean-1.96*sd,
+                                     ymax=mean+1.96*sd), width=0.25, size=0.005) +
+  geom_text_repel(aes(label=country), color="black", size=3,
+  position=position_jitter(width=0.2, seed=1)) +
+  labs(x=NULL, y="Life satisfaction") +
+  ggtitle("Life satisfaction by Gini tertiles") +
+  theme(plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+        axis.text=element_text(size=10, face="bold"),
+        axis.text.x=element_text(size=10, face="bold", color="black", angle=5),
+        axis.title=element_text(size=10,face="bold"),
+        axis.line=element_line(color="black"),
+        panel.grid.major=element_blank(),
+        panel.background=element_blank()) +
+  scale_x_discrete(labels=c("lower Gini","middle Gini","higher Gini"))
+crossbarplot2
+}
+
+grid.arrange(crossbarplot1, crossbarplot2, nrow=1)
+
+grid.arrange(mean_variance_full, crossbarplot2, nrow=1)
+
+
+```
+
+# final analyses on multiply imputed datasets
+```{r}
+# adjusted complex level 2 model
+sample <- mywvs6
+options <- list(debugmode = T, Meth = 0, resi.store = T, residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T), reset=c(2,2),
+                maxiter=50)
+model <-  life_satisfaction ~ 1 + sex + age_c + age_c_2 + income + education + socialclass + maritalstatus + gdp_c + gini_c + 
+  (1 + gini_c| country) + (1| id)
+# mi_fullRS_ls_gini <- lapply(mi_complete_final, function(x){ # analysis accounting for missing data ## not working
+#   runMLwiN(Formula = model, data = x, estoption = options)
+# })
+combined_fit <- pool(mi_fullRS_ls_gini)
+summary(combined_fit)
+
+# adjusted complex level 2 model - gini as tertile
+sample <- mywvs6
+diag <-  matrix(, nrow = 2, ncol = 1)
+diag[1, 1] <-  2
+diag[2, 1] <-  1
+options <- list(debugmode = F, Meth = 0, resi.store = T, residoptions='standardised',
+                weighting=list(weightvar=c(NA,"weight"), standardised=T), reset=c(2,2),
+                smat=diag, maxiter=50)
+model <-  life_satisfaction ~ 1 + sex + age_c + age_c_2 + income + education + socialclass + maritalstatus + gdp_c + gini_2nd + gini_3rd +
+  (gini_1st + gini_2nd + gini_3rd| country) + (1| id)
+# mi_fullRS_ls_gini_tertile <- lapply(mi_complete_final, function(x){ # analysis accounting for missing data
+#   runMLwiN(Formula = model, data = x, estoption = options)
+# })
+combined_fit <- pool(mi_fullRS_ls_gini_tertile)
+summary(combined_fit)
+
+
+
+
+
+```
+
+
+
+# all models with MCMC - R2MLwiN - life satisfaction
+```{r eval=F, echo=F}
+# null random intercept model
+# sample <- mywvs6
+# options <- list(debugmode = F, EstM = 1, resi.store = T, mcmcMeth = list(burnin=500, iterations=5000))
+# model <-  life_satisfaction ~ 1 + (1 | country) + (1| id)
+# nullRI_ls_MCMC <- runMLwiN(Formula = model, data = sample, estoption = options)
+# 
+# summary(nullRI_ls_MCMC)
+# 
+# trajectories(nullRI_ls_MCMC)
+# sixway2(nullRI_ls_MCMC@chains[, "RP2_var_Intercept", drop = FALSE], "RP2_var_Intercept")
+# 
+# # variance partitioning coefficient
+# vpc_mcmc <- nullRI_ls_MCMC["chains"][,"RP2_var_Intercept"] /
+#   (nullRI_ls_MCMC["chains"][,"RP1_var_Intercept"] +
+#      nullRI_ls_MCMC["chains"][,"RP2_var_Intercept"])
+# sixway2(vpc_mcmc, name="VPC_MCMC")
+
+# # adjusted random intercept model
+# sample <- mywvs6
+# options <- list(debugmode = F, EstM = 1, resi.store = T, mcmcMeth = list(burnin=500, iterations=5000))
+# model <-  life_satisfaction ~ 1 + sex + age_c + age_c_2 + income + education + 
+#   socialclass +  maritalstatus + lngdp + gini_c + 
+#   (1 | country) + (1 | id)
+# fullRI_ls_MCMC <- runMLwiN(Formula = model, data = sample, estoption = options)
+# 
+# summary(fullRI_ls_MCMC)
+# trajectories(fullRI_ls_MCMC)
+# 
+# sixway2(fullRI_ls_MCMC@chains[, "FP_gdp_c", drop = FALSE], "FP_gdp_c")
+# sixway2(fullRI_ls_MCMC@chains[, "RP2_var_Intercept", drop = FALSE], "RP2_var_Intercept")
+# 
+# # variance partitioning coefficient
+# vpc_mcmc <- fullRI_ls_MCMC["chains"][,"RP2_var_Intercept"] /
+#   (fullRI_ls_MCMC["chains"][,"RP1_var_Intercept"] +
+#      fullRI_ls_MCMC["chains"][,"RP2_var_Intercept"])
+# sixway2(vpc_mcmc, name="VPC_MCMC")
+
+# adjusted random slope model
+sample <- mywvs6
+options <- list(debugmode = F, EstM = 1, resi.store = T, residoptions='standardised',
+                mcmcMeth = list(burnin=500, iterations=10000))
+model <-  life_satisfaction ~ 1 + sex + age_c + age_c_2 + income_m + education_m + socialclass + maritalstatus_m + lngdp + gini_2nd + gini_3rd +
+                              (gini_1st + gini_2nd + gini_3rd | country) + (1| id)
+fullRS_ls_MCMC <- runMLwiN(Formula = model, data = sample, estoption = options)
+
+summary(fullRS_ls_MCMC)
+trajectories(fullRS_ls_MCMC)
+
+# compare DIC
+ComparingModels <- rbind(fullRI_ls_MCMC["BDIC"], fullRS_ls_MCMC["BDIC"])
+rownames(ComparingModels) <- c("Random intercept", "Random slope")
+ComparingModels
+
+# sixway diagnostics
+sixway2(fullRS_ls_MCMC@chains[, "FP_gini_2nd1", drop = FALSE], "FP_gini_2nd1")
+sixway2(fullRS_ls_MCMC@chains[, "RP2_var_gini_1st1", drop = FALSE], "RP2_var_gini_1st1")
+sixway2(fullRS_ls_MCMC@chains[, "RP2_var_gini_2nd1", drop = FALSE], "RP2_var_gini_2nd1")
+sixway2(fullRS_ls_MCMC@chains[, "RP2_var_gini_3rd1", drop = FALSE], "RP2_var_gini_3rd1")
+
+# plot variance as a quadratic function of gdp
+sample$lev2variance <- fullRS_ls_MCMC["RP"][["RP2_var_Intercept"]] +
+                    2 * fullRS_ls_MCMC["RP"][["RP2_cov_Intercept_gdp_c"]] *
+                    sample[["gdp_c"]] + fullRS_ls_MCMC["RP"][["RP2_var_gdp_c"]] *
+  sample[["gdp_c"]]^2 
+
+ggplot(data = sample, aes(gdp*10000, lev2variance)) +
+                    geom_line(linetype = "solid", size = 1) +
+                    labs(title="Variance by GDP",
+                         x="GDP",
+                         y = "Variance") +
+                    theme(plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+                          axis.text=element_text(size=10, face="bold"),
+                          axis.title=element_text(size=10,face="bold"))
+
+```
+
